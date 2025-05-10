@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/miyagishougo/development/Github/CardGame",
+      "program": "/Users/miyagishougo/development/Github/CardGame/build/Debug/outDebug"
+    }
+  ]
+}
