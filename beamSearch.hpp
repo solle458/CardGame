@@ -1,18 +1,14 @@
-#include <iostream>
+#pragma once
+
 #include <random>
 #include <algorithm>
 #include <numeric>
 #include <queue>
-#include <chrono>
 
 #include "CardGame.hpp"
 
 using namespace std;
 using State = CardGame;
-
-bool operator<(const State& lhs, const State& rhs) {
-    return lhs.evaluate_score_ < rhs.evaluate_score_;
-}
 
 int beamSearch(const State &state, const int beam_width, const int beam_depth){
     priority_queue<State> now_beam;
@@ -45,46 +41,4 @@ int beamSearch(const State &state, const int beam_width, const int beam_depth){
         }
     }
     return best_state.first_action_;
-}
-
-void testAiScore(const int game_number)
-{
-    mt19937 mt_for_construct(0);
-    int best_score = -1;
-    vector<int> best_cards;
-    for (int i = 0; i < game_number; i++)
-    {
-        cout << "Game: " << i + 1 << endl;
-
-        auto start_time = chrono::system_clock::now().time_since_epoch().count();
-        auto state = State(mt_for_construct());
-
-        while (!state.isDone())
-        {
-            state.advance(beamSearch(state, 100, END_TURN));
-        }
-
-        auto end_time = chrono::system_clock::now().time_since_epoch().count();
-        cout << "Time: " << (end_time - start_time) / 1e9 << " seconds" << endl;
-        state.show();
-
-        auto score = state.game_score_;
-        if (best_score < score)
-        {
-            best_score = score;
-            best_cards = state.card_;
-        }
-    }
-    cout << "Best Score: " << best_score << endl;
-    cout << "Best Cards: ";
-    for (auto card : best_cards)
-    {
-        cout << card << ", ";
-    }
-    cout << endl;
-}
-
-int main()
-{
-    testAiScore(10);
 }
