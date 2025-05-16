@@ -7,11 +7,16 @@
 #include <random>
 #include <chrono>
 #include <numeric>
+#include <map>
+
+#include "CSVHandler.h"
 
 using namespace std;
 
 using ll = long long;
 using namespace chrono;
+
+map<int, int> cardMap;
 
 const int N = 50;
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -49,7 +54,7 @@ double evaluate(const vector<int>& myDeck) {
 }
 
 // 焼きなまし法
-int simulatedAnnealing(Individual ind, double timeLimit) {
+int simulatedAnnealing(double timeLimit) {
     auto start = system_clock::now();
 
     vector<int> currentDeck(N), bestDeck(N);
@@ -63,7 +68,7 @@ int simulatedAnnealing(Individual ind, double timeLimit) {
 
     bestDeck = currentDeck;
 
-    double startTemp = ind.startTemp, endTemp = ind.endTemp;
+    double startTemp = 7340, endTemp = 1e-06;
 
     while (true) {
         auto now = system_clock::now();
@@ -74,14 +79,9 @@ int simulatedAnnealing(Individual ind, double timeLimit) {
         double temperature = startTemp * pow(endTemp / startTemp, t);
 
         vector<int> nextDeck = currentDeck;
-        for (int i = 0; i < 1; ++i) {
-            int idx1 = uniform_int_distribution<int>(0, N - 1)(rng);
-            int idx2 = uniform_int_distribution<int>(0, N - 1)(rng);
-            swap(nextDeck[idx1], nextDeck[idx2]);
-        }
-        // int i = uniform_int_distribution<int>(0, N - 1)(rng);
-        // int j = uniform_int_distribution<int>(0, N - 1)(rng);
-        // swap(nextDeck[i], nextDeck[j]);
+        int i = uniform_int_distribution<int>(0, N - 1)(rng);
+        int j = uniform_int_distribution<int>(0, N - 1)(rng);
+        swap(nextDeck[i], nextDeck[j]);
 
         double nextScore = evaluate(nextDeck);
         double diff = nextScore - currentScore;
@@ -102,71 +102,19 @@ int simulatedAnnealing(Individual ind, double timeLimit) {
         cerr << bestDeck[i] << " ";
     }
     cerr << endl;
+    cardMap[bestScore]++;
     return bestScore;
 }
 
 int main() {
-    ifstream fin("deck.csv");
-    if (!fin) {
-        cerr << "deck.csv が開けませんでした。" << endl;
-        return 1;
+    CSVFile<int> csv;
+    csv.csv_read("deck.csv", false, false, ',');
+    for (int i = 0; i < N; ++i)for (int j = 0; j < N; ++j) opponent[i][j] = csv.cell[i][j];
+    for(int i = 0; i < 100; ++i) {
+        double timeLimit = 2.0;
+        simulatedAnnealing(timeLimit);
     }
-
-    for (int i = 0; i < N; ++i) {
-        string line;
-        getline(fin, line);
-        stringstream ss(line);
-        for (int j = 0; j < N; ++j) {
-            string val;
-            getline(ss, val, ',');
-            opponent[i][j] = stoi(val);
-        }
+    for(auto& [key, value] : cardMap) {
+        cerr << key << ": " << value << endl;
     }
-
-    const int POP_SIZE = 20;
-    const int GENERATIONS = 30;
-    const int ELITE = 4;
-
-    vector<Individual> population(POP_SIZE);
-    for (auto& ind : population)
-        ind.score = simulatedAnnealing(ind, 2);
-
-    for (int gen = 0; gen < GENERATIONS; ++gen) {
-        sort(population.begin(), population.end(), [](const Individual& a, const Individual& b) {
-            return a.score > b.score;
-        });
-
-        cerr << "------------------------\n";
-        cerr << "Gen " << gen << " best: " << population[0].score << "\n";
-        cerr << "startTemp: " << population[0].startTemp << "\n";
-        cerr << "endTemp: " << population[0].endTemp << "\n";
-        cerr << "------------------------\n";
-
-        vector<Individual> newPop;
-        for (int i = 0; i < ELITE; ++i) newPop.push_back(population[i]);
-
-        while (newPop.size() < POP_SIZE) {
-            // トーナメント選択
-            Individual p1 = population[rng() % ELITE];
-            Individual p2 = population[rng() % ELITE];
-
-            Individual child;
-            child.startTemp = (p1.startTemp + p2.startTemp) / 2;
-            child.endTemp = sqrt(p1.endTemp * p2.endTemp);
-
-            child.mutate();
-            child.score = simulatedAnnealing(child, 2);
-            newPop.push_back(child);
-        }
-
-        population = newPop;
-    }
-
-    auto best = *max_element(population.begin(), population.end(),
-        [](const Individual& a, const Individual& b) { return a.score < b.score; });
-
-    cout << "Best parameters:\n";
-    cout << "startTemp = " << best.startTemp << "\n";
-    cout << "endTemp = " << best.endTemp << "\n";
-    cout << "score = " << best.score << "\n";
 }
