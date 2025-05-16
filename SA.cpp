@@ -21,24 +21,6 @@ map<int, int> cardMap;
 const int N = 50;
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 vector<vector<int>> opponent(N, vector<int>(N));
-
-struct Individual {
-    double startTemp;
-    double endTemp;
-    double score;
-
-    Individual() {
-        startTemp = rng() % 9901 + 100;             // 100 ~ 10000
-        endTemp = pow(10., -((rng() % 5) + 2.));      // 1e-2 ~ 1e-6
-        score = -1;
-    }
-
-    void mutate() {
-        if (uniform_real_distribution<>(0, 1)(rng) < 0.3) startTemp *= uniform_real_distribution<>(0.8, 1.2)(rng);
-        if (uniform_real_distribution<>(0, 1)(rng) < 0.3) endTemp *= uniform_real_distribution<>(0.8, 1.2)(rng);
-    }
-};
-
 // スコアを計算
 double evaluate(const vector<int>& myDeck) {
     double totalScore = 0.0;
